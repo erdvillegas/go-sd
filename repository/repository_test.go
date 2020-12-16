@@ -41,6 +41,25 @@ func TestLogOut(t *testing.T) {
 	}
 }
 
+func TestDoSelectRaw(t *testing.T) {
+
+	sid, err := Login("", "")
+	if err != nil {
+		log.Fatal("No se pudo ejecutar el Login")
+	}
+
+	resultados, err := SelectRaw(sid, "cr", "ref_num='640103179'", 2, []string{"ref_num"})
+	if err != nil {
+		log.Fatal("No se pudo ejecutar el Login")
+	}
+
+	if resultados.DoSelectReturn == "" {
+		t.Errorf("Resultados no validos")
+	}
+
+	Logout(sid)
+}
+
 func TestDoSelect(t *testing.T) {
 
 	sid, err := Login("", "")
@@ -48,13 +67,13 @@ func TestDoSelect(t *testing.T) {
 		log.Fatal("No se pudo ejecutar el Login")
 	}
 
-	resultados, err := Select(sid, "cr", "ref_num=640103179", 2, []string{"ref_num"})
+	resultados, err := Select(sid, "cr", "ref_num='640103179'", 1, []string{"ref_num", "summary"})
 	if err != nil {
-		log.Fatal("No se pudo ejecutar el Login")
+		t.Error("No se pudo ejecutar el Login")
 	}
 
-	if len(resultados.Body.DoSelectResponse.DoSelectReturn.UDSObjectList.UDSObject) <= 0 {
-		t.Errorf("No se encontraron resultados")
+	if len(resultados) <= 0 {
+		t.Errorf("Resultados no validos")
 	}
 
 	Logout(sid)

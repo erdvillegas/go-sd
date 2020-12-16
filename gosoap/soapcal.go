@@ -3,9 +3,11 @@ package gosoap
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"time"
 )
 
@@ -52,17 +54,23 @@ func call(ws string, action string, payloadInterface interface{}) ([]byte, error
 	req.Header.Set("SOAPAction", action)
 	req.Header.Set("Content-Type", "text/xml; charset=utf-8")
 
+	dump, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("\n\n%q\n\n", dump)
+
 	response, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
 	bodyBytes, err := ioutil.ReadAll(response.Body)
-	log.Println(string(bodyBytes))
 	if err != nil {
 		return nil, err
 	}
 
+	log.Printf("\n\n%s\n\n", string(bodyBytes))
 	defer response.Body.Close()
 	return bodyBytes, nil
 }
