@@ -19,13 +19,11 @@ func Login(user string, pass string) (int32, error) {
 	}
 
 	var loginResult LoginResponse
-	err := gosoap.SoapCallHandleResponse(URL, "urn:login", login, &loginResult)
+	err := gosoap.SoapCallHandleResponse(URL, LOGIN, login, &loginResult)
 
 	if err != nil {
 		return 0, err
 	}
-
-	log.Println(loginResult)
 
 	if loginResult.Body.LoginResponse.LoginReturn <= 0 {
 		return 0, errors.New("No se pudo ejecutar la consulta")
@@ -41,7 +39,7 @@ func Logout(sid int32) error {
 	}
 	sidRq := &caservice.Logout{Sid: sid}
 
-	err := gosoap.SoapCallHandleResponse(URL, "urn:logout", sidRq, nil)
+	err := gosoap.SoapCallHandleResponse(URL, LOGOUT, sidRq, nil)
 	if err != nil {
 		return err
 	}
@@ -51,8 +49,8 @@ func Logout(sid int32) error {
 
 //Select ejecuta una consulta hacia el servidor
 //sid ID de la sesion
-func Select(sid int32, objeto string, consulta string, limite int, atributos []string) (*caservice.DoSelectResponse, error) {
-	if sid > 0 {
+func Select(sid int32, objeto string, consulta string, limite int, atributos []string) (*DoSelectResponse, error) {
+	if sid <= 0 {
 		return nil, errors.New("SID no valido")
 	} else if objeto == "" {
 		return nil, errors.New("Se debe elegir almenos un objeto a consultar")
@@ -67,11 +65,12 @@ func Select(sid int32, objeto string, consulta string, limite int, atributos []s
 		},
 	}
 
-	var consultaRes caservice.DoSelectResponse
-	err := gosoap.SoapCallHandleResponse(URL, "url:doSelect", consultaReq, consultaRes)
+	var consultaRes DoSelectResponse
+	err := gosoap.SoapCallHandleResponse(URL, DOSELECT, consultaReq, &consultaRes)
+	log.Printf("#%s", &consultaRes)
 
 	if err != nil {
-		return &consultaRes, nil
+		return nil, err
 	}
 
 	return &consultaRes, nil

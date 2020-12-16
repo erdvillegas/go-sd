@@ -2,6 +2,15 @@ package repository
 
 import "encoding/xml"
 
+const (
+	//LOGIN Operacion de Login
+	LOGIN string = "urn:login"
+	//LOGOUT Operacion de Logout
+	LOGOUT string = "urn:logout"
+	//DOSELECT Realiza una consulta en linea
+	DOSELECT string = "url:doSelect"
+)
+
 //LoginResponse Respuesta del Login
 type LoginResponse struct {
 	XMLName xml.Name
@@ -14,21 +23,31 @@ type LoginResponse struct {
 	} `xml:"Body"`
 }
 
-//DoSelectResponse Respuesta de la consulta
+//DoSelectResponse Respuesta de un Do Select
 type DoSelectResponse struct {
-	XMLName xml.Name `xml:"Envelope"`
-	Text    string   `xml:",chardata"`
-	Soapenv string   `xml:"soapenv,attr"`
-	Xsd     string   `xml:"xsd,attr"`
-	Xsi     string   `xml:"xsi,attr"`
+	XMLName xml.Name
 	Body    struct {
-		Text             string `xml:",chardata"`
+		XMLName          xml.Name
 		DoSelectResponse struct {
-			Text           string `xml:",chardata"`
-			Xmlns          string `xml:"xmlns,attr"`
+			XMLName        xml.Name
 			DoSelectReturn struct {
-				Text  string `xml:",chardata"`
-				Xmlns string `xml:"xmlns,attr"`
+				XMLName       xml.Name
+				UDSObjectList struct {
+					XMLName   xml.Name
+					UDSObject []struct {
+						XMLName    xml.Name
+						Handle     string `xml:"Handle"`
+						Attributes struct {
+							XMLName   xml.Name
+							Attribute []struct {
+								XMLName   xml.Name
+								DataType  string `xml:"DataType,attr"`
+								AttrName  string `xml:"AttrName"`
+								AttrValue string `xml:"AttrValue"`
+							} `xml:"Attribute"`
+						} `xml:"Attributes"`
+					} `xml:"UDSObject"`
+				} `xml:"UDSObjectList"`
 			} `xml:"doSelectReturn"`
 		} `xml:"doSelectResponse"`
 	} `xml:"Body"`

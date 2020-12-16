@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 )
@@ -51,23 +52,17 @@ func call(ws string, action string, payloadInterface interface{}) ([]byte, error
 	req.Header.Set("SOAPAction", action)
 	req.Header.Set("Content-Type", "text/xml; charset=utf-8")
 
-	// dump, err := httputil.DumpRequestOut(req, true)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// _ := dump
-
 	response, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
 	bodyBytes, err := ioutil.ReadAll(response.Body)
+	log.Println(string(bodyBytes))
 	if err != nil {
 		return nil, err
 	}
 
-	// fmt.Println(string(bodyBytes))
 	defer response.Body.Close()
 	return bodyBytes, nil
 }
