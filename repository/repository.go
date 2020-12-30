@@ -9,6 +9,24 @@ import (
 	"github.com/hooklift/gowsdl/soap"
 )
 
+//CARepository Repositorio de CA
+type CARepository struct {
+	sID      int32
+	User     string
+	Password string
+}
+
+//InitRepository Inicializa una nueva instancia del servicio para comunicarse con el CA Services Desk
+func (c *CARepository) InitRepository() error {
+	if c.sID == 0 {
+		err := login(c)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 //URL del CA Services Desk
 const URL string = "http://cscmsdpb2.csc.fmx:8080/axis/services/USD_R11_WebService?WSDL"
 
@@ -20,40 +38,36 @@ func getServices() caservice.USD_WebServiceSoap {
 }
 
 //Login Inicia sesion y obtiene el SSID del webservices
-func Login(user string, pass string) (int32, error) {
+func login(c *CARepository) error {
 
 	service := getServices()
-	res, err := service.Login(&caservice.Login{Username: user, Password: pass})
+	res, err := service.Login(&caservice.Login{Username: c.User, Password: c.Password})
 	if err != nil {
-		return 0, err
+		c.sID = 0
+		return err
 	}
 
-	return res.LoginReturn, nil
+	c.sID = res.LoginReturn
+	return nil
 }
 
-//Logout Finaliza sesion con el servicio
-func Logout(sid int32) error {
-	if sid == 0 {
-		return errors.New("SID no debe estar vacio")
-	}
-
+//Close Finaliza sesion con el servicio
+func (c *CARepository) Close() error {
 	service := getServices()
-	service.Logout(&caservice.Logout{Sid: sid})
-
+	_, err := service.Logout(&caservice.Logout{Sid: c.sID})
+	if err != nil {
+		return err
+	}
+	c.sID = 0
 	return nil
 }
 
 //SelectRaw ejecuta una consulta hacia el servidor y regresa un XML de los resultados
 //sid ID de la sesion
-func SelectRaw(sid int32, objeto string, consulta string, limite int32, atributos []string) (*caservice.DoSelectResponse, error) {
-	if sid <= 0 {
-		return nil, errors.New("SID no valido")
-	} else if objeto == "" {
-		return nil, errors.New("Objeto no debe ser vacio")
-	}
+func (c CARepository) SelectRaw(objeto string, consulta string, limite int32, atributos []string) (*caservice.DoSelectResponse, error) {
 
 	selectReq := &caservice.DoSelect{
-		Sid:         sid,
+		Sid:         c.sID,
 		ObjectType:  objeto,
 		WhereClause: consulta,
 		MaxRows:     limite,
@@ -73,8 +87,8 @@ func SelectRaw(sid int32, objeto string, consulta string, limite int32, atributo
 
 //Select ejecuta una consulta hacia el servidor y regresa una lista de objetos
 //sid ID de la sesion
-func Select(sid int32, objeto string, consulta string, limite int32, atributos []string) ([]*UDSObjectList, error) {
-	resultados, err := SelectRaw(sid, objeto, consulta, limite, atributos)
+func (c CARepository) Select(objeto string, consulta string, limite int32, atributos []string) ([]*UDSObjectList, error) {
+	resultados, err := c.SelectRaw(objeto, consulta, limite, atributos)
 
 	if err != nil {
 		return nil, err

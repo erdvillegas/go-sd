@@ -3,52 +3,71 @@ package repository
 import (
 	"log"
 	"testing"
-	"time"
 )
 
 //Realiza prueba de inicio de sesion
 func TestLoginOk(t *testing.T) {
-	sid, err := Login("", "")
-	if err != nil {
-		t.Errorf("Ocurrio el error al generar la consulta, %s", err.Error())
+	caRepository := CARepository{
+		User:     "",
+		Password: "",
 	}
 
-	if sid == 0 {
-		t.Errorf("Error al realizar la consulta")
+	caRepository.InitRepository()
+	if caRepository.sID == 0 {
+		t.Errorf("No se pudo iniciar sesion, %d", caRepository.sID)
 	}
 
-	Logout(sid)
+	defer caRepository.Close()
 }
 
 func TestLoginFail(t *testing.T) {
-	sid, err := Login("", "")
+	caRepository := CARepository{
+		User:     "",
+		Password: "",
+	}
 
-	time.Sleep(5 * time.Second)
-	if sid > 0 || err == nil {
-		t.Errorf("Si se pudo realizar la consulta, SID: %d", sid)
+	caRepository.InitRepository()
+
+	if caRepository.sID != 0 {
+		t.Errorf("Si se pudo realizar la consulta, SID: %d", caRepository.sID)
+		defer caRepository.Close()
 	}
 }
 
 //LogOutTest Realiza una prueba
 func TestLogOut(t *testing.T) {
-	sid, err := Login("", "")
-
-	if err != nil {
-		err = Logout(sid)
-		if err != nil {
-			t.Errorf("Fallo al realizar el LogOut, SID: %d", sid)
-		}
+	caRepository := CARepository{
+		User:     "",
+		Password: "",
 	}
+	caRepository.InitRepository()
+
+	if caRepository.sID == 0 {
+		t.Skip()
+	}
+
+	err := caRepository.Close()
+	if err != nil {
+		t.Skip()
+	}
+
+	if caRepository.sID != 0 {
+		t.Errorf("Fallo al realizar el LogOut, SID: %d", caRepository.sID)
+	}
+
 }
 
 func TestDoSelectRaw(t *testing.T) {
 
-	sid, err := Login("", "")
-	if err != nil {
-		log.Fatal("No se pudo ejecutar el Login")
+	caRepository := CARepository{
+		User:     "",
+		Password: "",
 	}
+	caRepository.InitRepository()
 
-	resultados, err := SelectRaw(sid, "cr", "ref_num='640103179'", 2, []string{"ref_num"})
+	resultados, err := caRepository.SelectRaw("cr", "ref_num='640103179'", 2, []string{"ref_num"})
+	defer caRepository.Close()
+
 	if err != nil {
 		log.Fatal("No se pudo ejecutar el Login")
 	}
@@ -56,18 +75,19 @@ func TestDoSelectRaw(t *testing.T) {
 	if resultados.DoSelectReturn == "" {
 		t.Errorf("Resultados no validos")
 	}
-
-	Logout(sid)
 }
 
 func TestDoSelect(t *testing.T) {
-
-	sid, err := Login("", "")
-	if err != nil {
-		log.Fatal("No se pudo ejecutar el Login")
+	caRepository := CARepository{
+		User:     "",
+		Password: "",
 	}
 
-	resultados, err := Select(sid, "cr", "ref_num='640103179'", 1, []string{"ref_num", "summary"})
+	caRepository.InitRepository()
+
+	resultados, err := caRepository.Select("cr", "ref_num='640103179'", 1, []string{"ref_num", "summary"})
+	defer caRepository.Close()
+
 	if err != nil {
 		t.Error("No se pudo ejecutar el Login")
 	}
@@ -75,6 +95,4 @@ func TestDoSelect(t *testing.T) {
 	if len(resultados) <= 0 {
 		t.Errorf("Resultados no validos")
 	}
-
-	Logout(sid)
 }
